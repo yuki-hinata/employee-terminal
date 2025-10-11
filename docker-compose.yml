@@ -1,0 +1,12 @@
+version: '3'
+services:
+  node:
+    build: .
+    stdin_open: true
+    tty: true
+    ports:
+      - 3000:3000
+    volumes:
+      - .:/app
+      - /app/node_modules
+    working_dir: /app
