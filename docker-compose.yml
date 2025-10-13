@@ -1,7 +1,9 @@
 version: '3'
 services:
   node:
-    build: .
+    build:
+      context: .
+      dockerfile: ./docker/node/Dockerfile
     # https://qiita.com/s_i_engineer/items/9299e64062d5ba059d40
     # CLI上での対話形式を可能にするために以下の設定が必要である
     stdin_open: true
@@ -12,3 +14,20 @@ services:
       - .:/app
       - /app/node_modules
     working_dir: /app
+  mysql:
+    build:
+      context: ./docker/mysql
+      dockerfile: Dockerfile
+    ports:
+      - 3307:3306
+    volumes:
+      - mysql_data:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: employee_db
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+      TZ: Asia/Tokyo
+
+volumes:
+  mysql_data:
