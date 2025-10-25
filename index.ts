@@ -4,8 +4,13 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-// 再帰関数を使って、ユーザーがQやexitで抜けたとき以外は終了しないように実装する
-// これだと実行回数分、入力した文が表示される
+function escapeLikePattern(input: string): string {
+  return input
+    .replace(/\\/g, '\\\\')
+    .replace(/%/g, '\\%')
+    .replace(/_/g, '\\_');
+}
+
 const all = async () => {
   const rl = readline.createInterface({
     input,
@@ -19,12 +24,20 @@ const all = async () => {
     switch (line) {
       case "N":
         const name = await rl.question("名前を入力して下さい: ");
-        const employee = await prisma.employee.findFirst({
+
+        if (!name.trim()) {
+          console.log("名前を入力してください。");
+          rl.prompt();
+          return;
+        }
+
+        const escapedName = escapeLikePattern(name.trim());
+        const employee = await prisma.employee.findMany({
           where: {
-            name: { contains: name },
+            name: { contains: escapedName },
           },
         });
-        console.log(employee ?? "該当者がいません。");
+        console.log(employee.length > 0 ? employee : "該当者がいません。");
         rl.prompt();
         break;
       case "Q":
