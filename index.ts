@@ -1,36 +1,67 @@
 import * as readline from 'node:readline/promises';
 import { stdin as input, stdout as output } from 'node:process';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, type Employee } from '@prisma/client';
 
 const prisma = new PrismaClient();
+
+function escapeLikePattern(input: string): string {
+  return input
+    .replace(/\\/g, '\\\\')
+    .replace(/%/g, '\\%')
+    .replace(/_/g, '\\_');
+}
+
+function formatEmployee(employee: Omit<Employee, "createdAt" | "updatedAt">): string {
+  return `ID: ${employee.id} 名前: ${employee.name} 勤続年数: ${employee.yearsOfService}年 役職: ${employee.position}`;
+}
 
 async function main() {
   const rl = readline.createInterface({
     input,
     output,
+    prompt: "操作を選択して下さい: [N]名前検索 [Y]勤続年数 [Q]システム終了\n",
   });
 
-  const result = await rl.question("操作を選択して下さい: [N]名前検索 [Y]勤続年数 [Q]システム終了\n");
-  if (result === "N") {
-    const employee = await prisma.employee.findMany();
-    console.log(employee);
-    console.log("名前検索を実行します。");
-  } else if (result === "Y") {
-    console.log("勤続年数を実行します。");
-  } else if (result === "Q") {
-    console.log("システムを終了します。");
-    rl.close();
-  } else {
-    console.log("無効な操作です。");
-    rl.close();
-  }
+  rl.prompt();
+
+  rl.on("line", async (line) => {
+    switch (line) {
+      case "N":
+        const name = await rl.question("名前を入力して下さい: ");
+
+        if (!name.trim()) {
+          console.log("空文字での入力はできません。再度入力してください。");
+          rl.prompt();
+          return;
+        }
+
+        const escapedName = escapeLikePattern(name.trim());
+        const employee = await prisma.employee.findMany({
+          select: {
+            id: true,
+            name: true,
+            yearsOfService: true,
+            position: true,
+          },
+          where: {
+            name: { contains: escapedName },
+          },
+        });
+        console.log(employee.length > 0 ? employee.map(formatEmployee).join("\n") : "該当者がいません。");
+        rl.prompt();
+        break;
+      case "Q":
+        console.log("システムを終了します。");
+        rl.close();
+        break;
+      default:
+        console.log("該当するキーバインドがありません。再度入力してください。");
+        rl.prompt();
+    }
+  });
 }
 
 main()
-  .then(async () => {
-    await prisma.$disconnect();
-    console.log("プログラムを終了します。");
-  })
   .catch(async (error) => {
     console.error(error);
     await prisma.$disconnect();
