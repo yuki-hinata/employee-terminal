@@ -19,7 +19,7 @@ export const filterEmployeeByYearsOfService = async ({ rl, redis, prisma }: Prop
 
           const cachedYearsOfService = await redis.get(`years_of_service_search_cache:${yearsOfService.trim()}`);
           if (cachedYearsOfService) {
-            console.log(JSON.parse(cachedYearsOfService));
+            console.log(JSON.parse(cachedYearsOfService).map(formatEmployee).join("\n"));
             rl.prompt();
             return;
           }
@@ -35,7 +35,6 @@ export const filterEmployeeByYearsOfService = async ({ rl, redis, prisma }: Prop
           });
 
           if (employees.length > 0) {
-            console.log('キャッシュに保存しました。');
             await redis.set(`years_of_service_search_cache:${yearsOfService.trim()}`, JSON.stringify(employees));
           }
 

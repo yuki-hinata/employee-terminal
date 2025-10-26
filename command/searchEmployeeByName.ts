@@ -23,8 +23,7 @@ export const searchEmployeeByName = async ({ rl, redis, prisma }: Props) => {
 
         const cachedEmployees = await redis.get(`name_search_cache:${escapedName}`);
         if (cachedEmployees) {
-          console.log('キャッシュから取得しました。');
-          console.log(JSON.parse(cachedEmployees));
+          console.log(JSON.parse(cachedEmployees).map(formatEmployee).join("\n"));
           rl.prompt();
           return;
         }
@@ -42,7 +41,6 @@ export const searchEmployeeByName = async ({ rl, redis, prisma }: Props) => {
         });
 
         if (employee.length > 0) {
-          console.log('キャッシュに保存しました。');
           await redis.set(`name_search_cache:${escapedName}`, JSON.stringify(employee));
         }
 
