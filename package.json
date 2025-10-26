@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "@prisma/client": "^6.17.1",
-    "inquirer": "^12.9.6"
+    "inquirer": "^12.9.6",
+    "redis": "^5.9.0"
   }
 }

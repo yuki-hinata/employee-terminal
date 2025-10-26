@@ -6,11 +6,14 @@
 
 generator client {
   provider = "prisma-client-js"
+  // clientはコンテナ内からしかアクセスしないので、こちらのURLを使う
+  url      = env("DATABASE_URL")
 }
 
 datasource db {
   provider = "mysql"
-  url      = env("DATABASE_URL")
+  // コンテナ外からmigrateをするために、こちらのURLを使う
+  url      = env("CLIENT_DATABASE_URL")
 }
 
 model Employee {
