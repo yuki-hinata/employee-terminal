@@ -70,6 +70,25 @@ async function main() {
         console.log(employee.length > 0 ? employee.map(formatEmployee).join("\n") : "該当者がいません。");
         rl.prompt();
         break;
+      case "Y":
+          const yearsOfService = await rl.question("絞り込みたい勤続年数を入力して下さい(x年以上): ");
+          if (!yearsOfService.trim()) {
+            console.log("空文字での入力はできません。再度入力してください。");
+            rl.prompt();
+            return;
+          }
+          const employees = await prisma.employee.findMany({
+            select: {
+              id: true,
+              name: true,
+              yearsOfService: true,
+              position: true,
+            },
+            where: { yearsOfService: { gte: parseInt(yearsOfService.trim()) } },
+          });
+          console.log(employees.length > 0 ? employees.map(formatEmployee).join("\n") : "該当者がいません。");
+          rl.prompt();
+          break;
       case "Q":
         console.log("システムを終了します。");
         rl.close();
