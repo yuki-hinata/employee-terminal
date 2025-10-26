@@ -77,6 +77,15 @@ async function main() {
             rl.prompt();
             return;
           }
+
+          const cachedYearsOfService = await redis.get(`years_of_service_search_cache:${yearsOfService.trim()}`);
+          if (cachedYearsOfService) {
+            console.log('キャッシュから取得しました。');
+            console.log(JSON.parse(cachedYearsOfService));
+            rl.prompt();
+            return;
+          }
+
           const employees = await prisma.employee.findMany({
             select: {
               id: true,
@@ -86,6 +95,12 @@ async function main() {
             },
             where: { yearsOfService: { gte: parseInt(yearsOfService.trim()) } },
           });
+
+          if (employees.length > 0) {
+            console.log('キャッシュに保存しました。');
+            await redis.set(`years_of_service_search_cache:${yearsOfService.trim()}`, JSON.stringify(employees));
+          }
+
           console.log(employees.length > 0 ? employees.map(formatEmployee).join("\n") : "該当者がいません。");
           rl.prompt();
           break;
@@ -97,6 +112,12 @@ async function main() {
         console.log("該当するキーバインドがありません。再度入力してください。");
         rl.prompt();
     }
+  });
+
+  rl.on('close', async () => {
+    await redis.quit();
+    await prisma.$disconnect();
+    process.exit(0);
   });
 }
 
